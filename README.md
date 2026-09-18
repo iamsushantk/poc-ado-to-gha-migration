@@ -42,9 +42,10 @@ Provision environments in two explicit steps:
 split into GitHub first and Azure second, with confirmation required for each destructive action.
 Terraform and Terraform state handoff are deliberately not part of this simplified POC.
 
-The same operations are available through manually triggered root workflows for `dev`, `sit`, `uat`,
-and `prod`. Setup skips an existing GitHub Environment; teardown skips an environment that is not
-present.
+The same operations are available through the manually triggered root workflows
+`.github/workflows/infra-setup.yml` and `.github/workflows/infra-teardown.yml` for `dev`, `sit`,
+`uat`, and `prod`. Setup skips an existing GitHub Environment; teardown skips an environment that is
+not present.
 
 See `docs/ado-to-gha-migration.md` for the Azure DevOps mapping, secrets and permissions contract,
 environment approvals, state handoff, and rollback guidance.

@@ -1,15 +1,16 @@
-name: Request platform deployment
+name: Subscription portal - deploy
 
 on:
   push:
     branches: [main]
+    paths: ['projects/subscription-portal/**']
   workflow_dispatch:
     inputs:
       environment:
         description: Azure/GitHub environment to deploy
         required: true
         type: choice
-        options: [dev, sit]
+        options: [dev, sit, uat, prod]
         default: dev
 
 permissions:
@@ -82,7 +83,7 @@ jobs:
               const response = await github.rest.actions.listWorkflowRunsForRepo({
                 owner,
                 repo,
-                workflow_id: 'deploy.yml',
+                workflow_id: 'workflows-deploy.yml',
                 event: 'repository_dispatch',
                 per_page: 100
               });

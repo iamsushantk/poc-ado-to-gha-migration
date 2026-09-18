@@ -24,7 +24,7 @@ When run locally, the scripts derive the repository from `gh repo view`. In GitH
 workflows pass `${{ github.repository_owner }}` and `${{ github.event.repository.name }}` and set
 `GH_TOKEN`, so each repository manages only its own environments.
 
-The root `setup-environment.yml` and `teardown-environment.yml` workflows expose these operations
+The root `infra-setup.yml` and `infra-teardown.yml` workflows expose these operations
 manually for `dev`, `sit`, `uat`, and `prod`. Setup skips an environment that already exists;
 teardown skips an environment that does not exist. Configure the provisioning Azure OIDC secrets
 and, when required by repository permissions, `GH_PAT`.

@@ -1,19 +1,11 @@
-name: Subscription portal
+name: Subscription portal - CI
 
 on:
   pull_request:
-    paths:
-      - 'projects/subscription-portal/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/nextjs.yml'
+    paths: ['projects/subscription-portal/**', 'package.json', 'package-lock.json']
   push:
     branches: [main]
-    paths:
-      - 'projects/subscription-portal/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/nextjs.yml'
+    paths: ['projects/subscription-portal/**', 'package.json', 'package-lock.json']
   workflow_dispatch:
 
 permissions:

@@ -1,4 +1,4 @@
-name: Deploy application
+name: Workflows - deploy application
 
 on:
   repository_dispatch:
