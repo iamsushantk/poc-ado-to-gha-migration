@@ -44,9 +44,10 @@ Terraform and Terraform state handoff are deliberately not part of this simplifi
 
 The same operations are available through the manually triggered root workflows
 `.github/workflows/infra-setup.yml` and `.github/workflows/infra-teardown.yml` for `dev`, `sit`,
-`uat`, and `prod`. Setup always provisions the requested environment (Azure resources and GitHub
-Environment); teardown skips an environment that is
-not present.
+`uat`, and `prod`. Setup always invokes provisioning for the requested environment, but Azure
+provisioning checks each resource first and skips creation when it already exists (reusing the
+existing Container Registry rather than generating a new random name); teardown skips an
+environment that is not present.
 
 See `docs/ado-to-gha-migration.md` for the Azure DevOps mapping, secrets and permissions contract,
 environment approvals, state handoff, and rollback guidance.

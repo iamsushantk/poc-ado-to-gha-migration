@@ -43,8 +43,6 @@ require_environment() {
 
 load_resource_context() {
   RESOURCE_GROUP="rg-${RESOURCE_PREFIX}-${ENVIRONMENT}"
-  ACR_NAME="acr$(tr -d '-' <<< "$RESOURCE_PREFIX")${ENVIRONMENT}$(printf '%04d' "$(( $(od -An -N2 -tu2 /dev/urandom) % 10000 ))")"
-  ACR_LOGIN_SERVER="${ACR_NAME}.azurecr.io"
   PLAN_NAME="plan-${RESOURCE_PREFIX}-${ENVIRONMENT}"
   APP_NAME="app-${RESOURCE_PREFIX}-${ENVIRONMENT}"
   IDENTITY_NAME="id-${RESOURCE_PREFIX}-${ENVIRONMENT}"
@@ -52,12 +50,110 @@ load_resource_context() {
   NUMERIC_FIC_NAME="${FIC_NAME}-numeric-subject"
 }
 
+# Each ensure_* helper checks whether the resource already exists before creating it, so
+# rerunning provision-azure.sh against an already-provisioned environment is safe and fast.
+
+ensure_resource_group() {
+  if az group show --name "$RESOURCE_GROUP" >/dev/null 2>&1; then
+    echo "Resource group '$RESOURCE_GROUP' already exists; skipping creation."
+  else
+    az group create --name "$RESOURCE_GROUP" --location "$AZURE_LOCATION" \
+      --tags environment="$ENVIRONMENT" purpose=subscription-portal >/dev/null
+    echo "Created resource group '$RESOURCE_GROUP'."
+  fi
+}
+
+# The ACR name must be globally unique, so it is randomized on first creation. Reuse the ACR
+# already present in the resource group instead of generating (and losing track of) a new name.
+resolve_acr_name() {
+  local existing
+  existing="$(az acr list --resource-group "$RESOURCE_GROUP" --query '[0].name' -o tsv 2>/dev/null || true)"
+  if [[ -n "$existing" ]]; then
+    ACR_NAME="$existing"
+    echo "Found existing Azure Container Registry '$ACR_NAME'; skipping creation."
+  else
+    ACR_NAME="acr$(tr -d '-' <<< "$RESOURCE_PREFIX")${ENVIRONMENT}$(printf '%04d' "$(( $(od -An -N2 -tu2 /dev/urandom) % 10000 ))")"
+    az acr create --name "$ACR_NAME" --resource-group "$RESOURCE_GROUP" \
+      --location "$AZURE_LOCATION" --sku "$ACR_SKU" --admin-enabled false >/dev/null
+    echo "Created Azure Container Registry '$ACR_NAME'."
+  fi
+  ACR_LOGIN_SERVER="${ACR_NAME}.azurecr.io"
+}
+
+ensure_identity() {
+  if az identity show --name "$IDENTITY_NAME" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
+    echo "Managed identity '$IDENTITY_NAME' already exists; skipping creation."
+  else
+    az identity create --name "$IDENTITY_NAME" --resource-group "$RESOURCE_GROUP" \
+      --location "$AZURE_LOCATION" --tags environment="$ENVIRONMENT" purpose=subscription-portal >/dev/null
+    echo "Created managed identity '$IDENTITY_NAME'."
+  fi
+}
+
+ensure_app_service_plan() {
+  if az appservice plan show --name "$PLAN_NAME" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
+    echo "App Service plan '$PLAN_NAME' already exists; skipping creation."
+  else
+    az appservice plan create --name "$PLAN_NAME" --resource-group "$RESOURCE_GROUP" \
+      --location "$AZURE_LOCATION" --is-linux --sku "$APP_SERVICE_SKU" >/dev/null
+    echo "Created App Service plan '$PLAN_NAME'."
+  fi
+}
+
+ensure_web_app() {
+  if az webapp show --name "$APP_NAME" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
+    echo "Web app '$APP_NAME' already exists; skipping creation."
+  else
+    az webapp create --name "$APP_NAME" --resource-group "$RESOURCE_GROUP" --plan "$PLAN_NAME" \
+      --deployment-container-image-name "$PLACEHOLDER_IMAGE" >/dev/null
+    echo "Created web app '$APP_NAME'."
+  fi
+}
+
+ensure_web_app_identity() {
+  local identity_id="$1"
+  if az webapp identity show --name "$APP_NAME" --resource-group "$RESOURCE_GROUP" \
+      --query "userAssignedIdentities.\"${identity_id}\"" -o tsv 2>/dev/null | grep -q .; then
+    echo "Managed identity already assigned to '$APP_NAME'; skipping."
+  else
+    az webapp identity assign --name "$APP_NAME" --resource-group "$RESOURCE_GROUP" \
+      --identities "$identity_id" >/dev/null
+    echo "Assigned managed identity to '$APP_NAME'."
+  fi
+}
+
+ensure_role_assignment() {
+  local principal_id="$1" role="$2" scope="$3"
+  if az role assignment list --assignee-object-id "$principal_id" --role "$role" --scope "$scope" \
+      --query '[0].id' -o tsv 2>/dev/null | grep -q .; then
+    echo "Role '$role' already assigned at scope '$scope'; skipping."
+  else
+    az role assignment create --assignee-object-id "$principal_id" --assignee-principal-type ServicePrincipal \
+      --role "$role" --scope "$scope" >/dev/null
+    echo "Assigned role '$role' at scope '$scope'."
+  fi
+}
+
+ensure_federated_credential() {
+  local name="$1" subject="$2"
+  if az identity federated-credential show --name "$name" --identity-name "$IDENTITY_NAME" \
+      --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
+    echo "Federated credential '$name' already exists; skipping."
+  else
+    az identity federated-credential create --name "$name" --identity-name "$IDENTITY_NAME" \
+      --resource-group "$RESOURCE_GROUP" --issuer https://token.actions.githubusercontent.com \
+      --subject "$subject" --audiences api://AzureADTokenExchange >/dev/null
+    echo "Created federated credential '$name'."
+  fi
+}
+
 load_azure_context() {
   load_resource_context
   load_github_context
   SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
   TENANT_ID="$(az account show --query tenantId -o tsv)"
-  APPLICATION_ID="$(az identity show --name "$IDENTITY_NAME" --resource-group "$RESOURCE_GROUP" --query clientId -o tsv)"
+  # APPLICATION_ID is resolved later, once the managed identity is known to exist
+  # (ensure_identity may need to create it first on a fresh environment).
 }
 
 write_context() {
