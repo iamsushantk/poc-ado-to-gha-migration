@@ -16,7 +16,7 @@ GitHub integration.
 Node.js 20+, npm, Bash, Azure CLI, GitHub CLI, and Docker are required for the full workflow.
 Authenticate `az` and `gh` locally before running provisioning scripts.
 Repository identity is derived from the current GitHub repository context in Actions and from
-`gh repo view` locally; set `GITHUB_OWNER` and `PLATFORM_REPOSITORY` only when intentionally
+`gh repo view` locally; set `GITHUB_OWNER` and `WORKFLOW_REPOSITORY` only when intentionally
 targeting a different repository.
 
 ## Local development

@@ -23,7 +23,7 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
       GITHUB_OWNER: ${{ github.repository_owner }}
-      PLATFORM_REPOSITORY: ${{ github.event.repository.name }}
+      WORKFLOW_REPOSITORY: ${{ github.event.repository.name }}
       AZURE_LOCATION: australiaeast
       ENVIRONMENT: ${{ inputs.environment }}
     steps:

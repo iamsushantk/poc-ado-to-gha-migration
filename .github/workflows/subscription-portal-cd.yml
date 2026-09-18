@@ -66,14 +66,14 @@ jobs:
         id: platform-result
         uses: actions/github-script@v7
         env:
-          PLATFORM_REPOSITORY: ${{ github.repository }}
+          WORKFLOW_REPOSITORY: ${{ github.repository }}
           APPLICATION_REPOSITORY: ${{ github.repository }}
           APPLICATION_REF: ${{ github.sha }}
           ENVIRONMENT_NAME: ${{ github.event.inputs.environment || 'dev' }}
         with:
           github-token: ${{ secrets.PLATFORM_WORKFLOW_TOKEN }}
           script: |
-            const [owner, repo] = process.env.PLATFORM_REPOSITORY.split('/');
+            const [owner, repo] = process.env.WORKFLOW_REPOSITORY.split('/');
             const refMarker = process.env.APPLICATION_REF.slice(0, 12);
             const startedAt = Date.now();
             const timeoutMs = 15 * 60 * 1000;

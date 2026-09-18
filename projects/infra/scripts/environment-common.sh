@@ -10,9 +10,9 @@ AZURE_LOCATION="${AZURE_LOCATION:-australiaeast}"
 ACR_SKU="${ACR_SKU:-Basic}"
 APP_SERVICE_SKU="${APP_SERVICE_SKU:-B1}"
 GITHUB_OWNER="${GITHUB_OWNER:-}"
-PLATFORM_REPOSITORY="${PLATFORM_REPOSITORY:-}"
+WORKFLOW_REPOSITORY="${WORKFLOW_REPOSITORY:-}"
 GITHUB_OWNER_ID="${GITHUB_OWNER_ID:-132103049}"
-PLATFORM_REPOSITORY_ID="${PLATFORM_REPOSITORY_ID:-1375463783}"
+WORKFLOW_REPOSITORY_ID="${WORKFLOW_REPOSITORY_ID:-1375463783}"
 PLACEHOLDER_IMAGE="${PLACEHOLDER_IMAGE:-mcr.microsoft.com/appsvc/staticsite:latest}"
 # The subscription-portal image is not yet built when the App Service is created, so it starts
 # with a public placeholder image; the first CD run replaces it with the real container image.
@@ -26,13 +26,13 @@ require_github_command() {
 }
 
 load_github_context() {
-  if [[ -z "$GITHUB_OWNER" || -z "$PLATFORM_REPOSITORY" ]]; then
+  if [[ -z "$GITHUB_OWNER" || -z "$WORKFLOW_REPOSITORY" ]]; then
     local repository
     repository="$(gh repo view --json nameWithOwner --jq '.nameWithOwner')"
     GITHUB_OWNER="${repository%%/*}"
-    PLATFORM_REPOSITORY="${repository#*/}"
+    WORKFLOW_REPOSITORY="${repository#*/}"
   fi
-  [[ -n "$GITHUB_OWNER" && -n "$PLATFORM_REPOSITORY" ]] ||
+  [[ -n "$GITHUB_OWNER" && -n "$WORKFLOW_REPOSITORY" ]] ||
     { echo "error: GitHub owner and repository could not be determined" >&2; exit 1; }
 }
 
@@ -168,7 +168,7 @@ APPLICATION_ID=$APPLICATION_ID
 TENANT_ID=$TENANT_ID
 SUBSCRIPTION_ID=$SUBSCRIPTION_ID
 GITHUB_OWNER=$GITHUB_OWNER
-PLATFORM_REPOSITORY=$PLATFORM_REPOSITORY
+WORKFLOW_REPOSITORY=$WORKFLOW_REPOSITORY
 EOF
   echo "Wrote provisioning context to $context_file"
 }
@@ -184,14 +184,14 @@ load_context_file() {
 }
 
 set_platform_environment() {
-  gh api --method PUT "repos/${GITHUB_OWNER}/${PLATFORM_REPOSITORY}/environments/${ENVIRONMENT}" >/dev/null
+  gh api --method PUT "repos/${GITHUB_OWNER}/${WORKFLOW_REPOSITORY}/environments/${ENVIRONMENT}" >/dev/null
   printf '%s' "$APPLICATION_ID" |
-    gh secret set AZURE_CLIENT_ID --repo "${GITHUB_OWNER}/${PLATFORM_REPOSITORY}" --env "$ENVIRONMENT"
+    gh secret set AZURE_CLIENT_ID --repo "${GITHUB_OWNER}/${WORKFLOW_REPOSITORY}" --env "$ENVIRONMENT"
   printf '%s' "$TENANT_ID" |
-    gh secret set AZURE_TENANT_ID --repo "${GITHUB_OWNER}/${PLATFORM_REPOSITORY}" --env "$ENVIRONMENT"
+    gh secret set AZURE_TENANT_ID --repo "${GITHUB_OWNER}/${WORKFLOW_REPOSITORY}" --env "$ENVIRONMENT"
   printf '%s' "$SUBSCRIPTION_ID" |
-    gh secret set AZURE_SUBSCRIPTION_ID --repo "${GITHUB_OWNER}/${PLATFORM_REPOSITORY}" --env "$ENVIRONMENT"
-  gh variable set ACR_LOGIN_SERVER --repo "${GITHUB_OWNER}/${PLATFORM_REPOSITORY}" --env "$ENVIRONMENT" --body "$ACR_LOGIN_SERVER"
-  gh variable set RESOURCE_GROUP --repo "${GITHUB_OWNER}/${PLATFORM_REPOSITORY}" --env "$ENVIRONMENT" --body "$RESOURCE_GROUP"
-  gh variable set APP_SERVICE_NAME --repo "${GITHUB_OWNER}/${PLATFORM_REPOSITORY}" --env "$ENVIRONMENT" --body "$APP_NAME"
+    gh secret set AZURE_SUBSCRIPTION_ID --repo "${GITHUB_OWNER}/${WORKFLOW_REPOSITORY}" --env "$ENVIRONMENT"
+  gh variable set ACR_LOGIN_SERVER --repo "${GITHUB_OWNER}/${WORKFLOW_REPOSITORY}" --env "$ENVIRONMENT" --body "$ACR_LOGIN_SERVER"
+  gh variable set RESOURCE_GROUP --repo "${GITHUB_OWNER}/${WORKFLOW_REPOSITORY}" --env "$ENVIRONMENT" --body "$RESOURCE_GROUP"
+  gh variable set APP_SERVICE_NAME --repo "${GITHUB_OWNER}/${WORKFLOW_REPOSITORY}" --env "$ENVIRONMENT" --body "$APP_NAME"
 }

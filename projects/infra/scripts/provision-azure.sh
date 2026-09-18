@@ -29,8 +29,8 @@ ensure_role_assignment "$PRINCIPAL_ID" AcrPull "$acr_id"
 ensure_role_assignment "$PRINCIPAL_ID" "Website Contributor" "$rg_id"
 
 for subject in \
-  "repo:${GITHUB_OWNER}/${PLATFORM_REPOSITORY}:environment:${ENVIRONMENT}" \
-  "repo:${GITHUB_OWNER}@${GITHUB_OWNER_ID}/${PLATFORM_REPOSITORY}@${PLATFORM_REPOSITORY_ID}:environment:${ENVIRONMENT}"; do
+  "repo:${GITHUB_OWNER}/${WORKFLOW_REPOSITORY}:environment:${ENVIRONMENT}" \
+  "repo:${GITHUB_OWNER}@${GITHUB_OWNER_ID}/${WORKFLOW_REPOSITORY}@${WORKFLOW_REPOSITORY_ID}:environment:${ENVIRONMENT}"; do
   name="$FIC_NAME"
   [[ "$subject" == repo:*@* ]] && name="$NUMERIC_FIC_NAME"
   ensure_federated_credential "$name" "$subject"

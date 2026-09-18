@@ -22,7 +22,7 @@ elsewhere. Azure and GitHub teardown are also independent:
 ```
 
 They require authentication only for the provider they operate on and use environment variables for
-the owner, platform repository, Azure location, resource prefix, and SKU overrides. Review each
+the owner, workflow repository, Azure location, resource prefix, and SKU overrides. Review each
 script before use; teardown is destructive.
 
 When run locally, the scripts derive the repository from `gh repo view`. In GitHub Actions, the

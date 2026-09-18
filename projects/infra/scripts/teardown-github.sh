@@ -11,10 +11,10 @@ require_environment
 load_resource_context
 load_github_context
 
-echo "This permanently deletes GitHub environment '$ENVIRONMENT' from ${GITHUB_OWNER}/${PLATFORM_REPOSITORY}."
+echo "This permanently deletes GitHub environment '$ENVIRONMENT' from ${GITHUB_OWNER}/${WORKFLOW_REPOSITORY}."
 read -r -p "Type '$ENVIRONMENT' to continue: " confirmation
 [[ "$confirmation" == "$ENVIRONMENT" ]] ||
   { echo "error: confirmation did not match" >&2; exit 1; }
 
-gh api --method DELETE "repos/${GITHUB_OWNER}/${PLATFORM_REPOSITORY}/environments/${ENVIRONMENT}"
+gh api --method DELETE "repos/${GITHUB_OWNER}/${WORKFLOW_REPOSITORY}/environments/${ENVIRONMENT}"
 echo "GitHub teardown completed for $ENVIRONMENT."
