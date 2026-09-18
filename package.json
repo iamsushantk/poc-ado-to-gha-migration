@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
-    "projects/nextjs-app"
+    "projects/subscription-portal"
   ],
   "scripts": {
-    "build": "npm run build --workspace projects/nextjs-app",
-    "lint": "npm run lint --workspace projects/nextjs-app",
+    "build": "npm run build --workspace projects/subscription-portal",
+    "lint": "npm run lint --workspace projects/subscription-portal",
     "validate:shell": "bash -n projects/provisioning-scripts/scripts/*.sh",
     "validate": "npm run lint && npm run build && npm run validate:shell"
   }

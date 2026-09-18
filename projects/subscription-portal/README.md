@@ -1,4 +1,4 @@
-# Next.js application
+# Subscription portal
 
 This App Router application builds as a standalone container and requests deployment through the
 centralized `platform-workflows` project. The request includes the exact commit, target environment,
@@ -18,12 +18,12 @@ gh secret set PLATFORM_WORKFLOW_TOKEN --repo OWNER/poc-ado-to-gha-migration
 
 ```powershell
 npm install
-npm run dev --workspace projects/nextjs-app
+npm run dev --workspace projects/subscription-portal
 ```
 
 ## Local Docker build
 
 ```powershell
-docker build -t poc-ado-to-gha-migration-nextjs:local .
-docker run -p 8080:8080 poc-ado-to-gha-migration-nextjs:local
+docker build -t subscription-portal:local .
+docker run -p 8080:8080 subscription-portal:local
 ```

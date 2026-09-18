@@ -56,7 +56,7 @@ jobs:
                 ref: context.sha,
                 commit_message: commitMessage,
                 environment: '${{ github.event.inputs.environment || 'dev' }}',
-                image_name: 'poc-ado-to-gha-migration-nextjs',
+                image_name: 'subscription-portal',
                 source_run_id: String(context.runId)
               }
             });

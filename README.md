@@ -7,7 +7,7 @@ GitHub integration.
 ## Projects
 
 - `projects/provisioning-scripts` - Azure CLI/GitHub CLI environment lifecycle scripts.
-- `projects/nextjs-app` - Next.js App Router application and its workflow that dispatches an exact
+- `projects/subscription-portal` - Next.js App Router application and its workflow that dispatches an exact
   commit/environment deployment request.
 - `projects/platform-workflows` - centralized deployment, provisioning, and teardown workflows.
 
@@ -23,11 +23,11 @@ targeting a different repository.
 
 ```powershell
 npm install
-npm run dev --workspace projects/nextjs-app
+npm run dev --workspace projects/subscription-portal
 ```
 
-Run repository checks with `npm run validate`. The shell validation requires Bash (Git Bash or WSL
-on Windows).
+Run the Next.js checks with `npm run lint` and `npm run build`, or trigger the repository's
+Next.js-specific workflow manually. The shell validation requires Bash (Git Bash or WSL on Windows).
 
 ## Deployment model
 
