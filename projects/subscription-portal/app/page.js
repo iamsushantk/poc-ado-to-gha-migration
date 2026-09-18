@@ -4,7 +4,7 @@ export default function Home() {
 
   return (
     <main style={{ fontFamily: 'sans-serif', padding: '2rem' }}>
-      <h1>poc-gha-oidc</h1>
+      <h1>subscription-portal</h1>
       <p>Next.js app deployed to Azure App Service via GitHub Actions OIDC.</p>
       <p>
         Environment: <strong>{environment}</strong>

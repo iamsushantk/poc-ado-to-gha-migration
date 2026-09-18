@@ -5,7 +5,7 @@ set -euo pipefail
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 ENVIRONMENT="${1:-}"
-RESOURCE_PREFIX="${RESOURCE_PREFIX:-poc-subscription}"
+RESOURCE_PREFIX="${RESOURCE_PREFIX:-subscription-portal}"
 AZURE_LOCATION="${AZURE_LOCATION:-australiaeast}"
 ACR_SKU="${ACR_SKU:-Basic}"
 APP_SERVICE_SKU="${APP_SERVICE_SKU:-B1}"
@@ -14,6 +14,8 @@ PLATFORM_REPOSITORY="${PLATFORM_REPOSITORY:-}"
 GITHUB_OWNER_ID="${GITHUB_OWNER_ID:-132103049}"
 PLATFORM_REPOSITORY_ID="${PLATFORM_REPOSITORY_ID:-1375463783}"
 PLACEHOLDER_IMAGE="${PLACEHOLDER_IMAGE:-mcr.microsoft.com/appsvc/staticsite:latest}"
+# The subscription-portal image is not yet built when the App Service is created, so it starts
+# with a public placeholder image; the first CD run replaces it with the real container image.
 
 require_azure_command() {
   command -v az >/dev/null || { echo "error: Azure CLI (az) is required" >&2; exit 1; }

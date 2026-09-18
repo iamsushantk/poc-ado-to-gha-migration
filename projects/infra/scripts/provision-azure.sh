@@ -11,12 +11,12 @@ require_environment
 load_azure_context
 
 az group create --name "$RESOURCE_GROUP" --location "$AZURE_LOCATION" \
-  --tags environment="$ENVIRONMENT" purpose=poc-gha-oidc >/dev/null
+  --tags environment="$ENVIRONMENT" purpose=subscription-portal >/dev/null
 az acr create --name "$ACR_NAME" --resource-group "$RESOURCE_GROUP" \
   --location "$AZURE_LOCATION" --sku "$ACR_SKU" --admin-enabled false >/dev/null
 
 az identity create --name "$IDENTITY_NAME" --resource-group "$RESOURCE_GROUP" \
-  --location "$AZURE_LOCATION" --tags environment="$ENVIRONMENT" purpose=poc-gha-oidc >/dev/null
+  --location "$AZURE_LOCATION" --tags environment="$ENVIRONMENT" purpose=subscription-portal >/dev/null
 APPLICATION_ID="$(az identity show --name "$IDENTITY_NAME" --resource-group "$RESOURCE_GROUP" --query clientId -o tsv)"
 PRINCIPAL_ID="$(az identity show --name "$IDENTITY_NAME" --resource-group "$RESOURCE_GROUP" --query principalId -o tsv)"
 IDENTITY_ID="$(az identity show --name "$IDENTITY_NAME" --resource-group "$RESOURCE_GROUP" --query id -o tsv)"

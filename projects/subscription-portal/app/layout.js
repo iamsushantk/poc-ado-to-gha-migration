@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'poc-gha-oidc',
+  title: 'subscription-portal',
   description: 'Next.js scaffold deployed via GitHub Actions OIDC to Azure App Service',
 };
 
