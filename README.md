@@ -6,7 +6,7 @@ GitHub integration.
 
 ## Projects
 
-- `projects/provisioning-scripts` - Azure CLI/GitHub CLI environment lifecycle scripts.
+- `projects/infra` - Azure CLI/GitHub CLI environment lifecycle scripts.
 - `projects/subscription-portal` - Next.js App Router application and its workflow that dispatches an exact
   commit/environment deployment request.
 - `projects/platform-workflows` - centralized deployment, provisioning, and teardown workflows.
@@ -37,8 +37,8 @@ Registry, and updates the target App Service using Azure OIDC. Azure trusts the 
 not each application repository.
 
 Provision environments in two explicit steps:
-`projects/provisioning-scripts/scripts/provision-azure.sh <environment>` followed by
-`projects/provisioning-scripts/scripts/provision-github.sh <environment>`. Teardown is similarly
+`projects/infra/scripts/provision-azure.sh <environment>` followed by
+`projects/infra/scripts/provision-github.sh <environment>`. Teardown is similarly
 split into GitHub first and Azure second, with confirmation required for each destructive action.
 Terraform and Terraform state handoff are deliberately not part of this simplified POC.
 

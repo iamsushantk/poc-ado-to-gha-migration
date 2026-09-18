@@ -1,4 +1,4 @@
-# Provisioning scripts
+# Infrastructure
 
 Provisioning is split into independent Azure and GitHub steps using only the Azure CLI and GitHub CLI:
 

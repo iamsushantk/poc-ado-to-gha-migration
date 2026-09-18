@@ -50,10 +50,10 @@ jobs:
 
       - name: Provision Azure resources
         if: steps.environment.outputs.exists == 'false'
-        working-directory: projects/provisioning-scripts
+        working-directory: projects/infra
         run: bash scripts/provision-azure.sh "$ENVIRONMENT"
 
       - name: Provision GitHub Environment
         if: steps.environment.outputs.exists == 'false'
-        working-directory: projects/provisioning-scripts
+        working-directory: projects/infra
         run: bash scripts/provision-github.sh "$ENVIRONMENT"

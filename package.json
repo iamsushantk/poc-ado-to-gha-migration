@@ -8,7 +8,7 @@
   "scripts": {
     "build": "npm run build --workspace projects/subscription-portal",
     "lint": "npm run lint --workspace projects/subscription-portal",
-    "validate:shell": "bash -n projects/provisioning-scripts/scripts/*.sh",
+    "validate:shell": "bash -n projects/infra/scripts/*.sh",
     "validate": "npm run lint && npm run build && npm run validate:shell"
   }
 }

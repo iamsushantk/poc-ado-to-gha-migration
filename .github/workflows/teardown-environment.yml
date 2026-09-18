@@ -54,10 +54,10 @@ jobs:
 
       - name: Tear down GitHub Environment
         if: steps.environment.outputs.exists == 'true'
-        working-directory: projects/provisioning-scripts
+        working-directory: projects/infra
         run: printf '%s\n' "$ENVIRONMENT" | bash scripts/teardown-github.sh "$ENVIRONMENT"
 
       - name: Tear down Azure resources
         if: steps.environment.outputs.exists == 'true'
-        working-directory: projects/provisioning-scripts
+        working-directory: projects/infra
         run: printf '%s\n' "$ENVIRONMENT" | bash scripts/teardown-azure.sh "$ENVIRONMENT"
