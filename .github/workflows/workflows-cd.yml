@@ -1,4 +1,4 @@
-name: Workflows - deploy application
+name: Workflows - CD
 
 on:
   repository_dispatch:
