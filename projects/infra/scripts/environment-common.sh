@@ -81,11 +81,12 @@ resolve_acr_name() {
 }
 
 ensure_identity() {
+  local purpose="${1:-subscription-portal}"
   if az identity show --name "$IDENTITY_NAME" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
     echo "Managed identity '$IDENTITY_NAME' already exists; skipping creation."
   else
     az identity create --name "$IDENTITY_NAME" --resource-group "$RESOURCE_GROUP" \
-      --location "$AZURE_LOCATION" --tags environment="$ENVIRONMENT" purpose=subscription-portal >/dev/null
+      --location "$AZURE_LOCATION" --tags environment="$ENVIRONMENT" purpose="$purpose" >/dev/null
     echo "Created managed identity '$IDENTITY_NAME'."
   fi
 }

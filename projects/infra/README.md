@@ -1,5 +1,25 @@
 # Infrastructure
 
+## One-time bootstrap
+
+`infra-setup.yml` and `infra-teardown.yml` log in to Azure via OIDC using repository-level secrets
+(`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`) *before* any per-environment
+identity exists. Run this once, locally, signed in with an Azure account that can create role
+assignments (e.g. Owner) at the subscription scope:
+
+```bash
+./scripts/bootstrap-azure.sh
+```
+
+This creates a standing "bootstrap" managed identity, grants it `Contributor` and `User Access
+Administrator` at the subscription scope, trusts it for `infra-setup.yml`/`infra-teardown.yml` when
+dispatched from `main` (set `BOOTSTRAP_BRANCH` to trust a different branch), and stores its
+credentials as repository-level secrets via `gh secret set`. It is idempotent and safe to rerun.
+Without this step, the first run of `infra-setup.yml` fails at the "Log in to Azure" step because
+those secrets don't exist yet.
+
+## Provisioning environments
+
 Provisioning is split into independent Azure and GitHub steps using only the Azure CLI and GitHub CLI:
 
 ```bash
