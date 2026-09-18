@@ -1,0 +1,14 @@
+{
+  "name": "poc-ado-to-gha-migration",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "projects/nextjs-app"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace projects/nextjs-app",
+    "lint": "npm run lint --workspace projects/nextjs-app",
+    "validate:shell": "bash -n projects/provisioning-scripts/scripts/*.sh",
+    "validate": "npm run lint && npm run build && npm run validate:shell"
+  }
+}

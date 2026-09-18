@@ -1,0 +1,59 @@
+name: Set up environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to set up
+        required: true
+        type: choice
+        options:
+          - dev
+          - sit
+          - uat
+          - prod
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
+      GITHUB_OWNER: ${{ github.repository_owner }}
+      PLATFORM_REPOSITORY: ${{ github.event.repository.name }}
+      AZURE_LOCATION: australiaeast
+      ENVIRONMENT: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check whether GitHub Environment exists
+        id: environment
+        run: |
+          set -euo pipefail
+          if gh api "repos/${{ github.repository }}/environments/${ENVIRONMENT}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "GitHub Environment '$ENVIRONMENT' already exists; skipping setup."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Log in to Azure
+        if: steps.environment.outputs.exists == 'false'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Provision Azure resources
+        if: steps.environment.outputs.exists == 'false'
+        working-directory: projects/provisioning-scripts
+        run: bash scripts/provision-azure.sh "$ENVIRONMENT"
+
+      - name: Provision GitHub Environment
+        if: steps.environment.outputs.exists == 'false'
+        working-directory: projects/provisioning-scripts
+        run: bash scripts/provision-github.sh "$ENVIRONMENT"

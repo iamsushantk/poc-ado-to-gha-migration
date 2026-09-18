@@ -1,0 +1,272 @@
+Azure CLI commands for creating the Terraform-defined Azure resources for the dev environment.
+
+Run az login first, then set the subscription and variables:
+
+az login
+
+az account set --subscription "$SUBSCRIPTION_ID"
+
+export LOCATION="australiaeast"
+export PREFIX="poc-subscription"
+export ENV="dev"
+
+export RG_NAME="rg-${PREFIX}-${ENV}"
+export ACR_NAME="acrpocsubscriptiondev1234"
+export PLAN_NAME="plan-${PREFIX}-${ENV}"
+export APP_NAME="app-${PREFIX}-${ENV}"
+export IDENTITY_NAME="id-${PREFIX}-${ENV}"
+
+export GITHUB_OWNER="iamsushantk"
+export GITHUB_REPOSITORY="poc-gha-oidc"
+export GH_REPOSITORY="${GITHUB_OWNER}/${GITHUB_REPOSITORY}"
+export GH_ENVIRONMENT="$ENV"
+
+# ACR_NAME must be globally unique and contain only letters and numbers.
+
+# Create the resource group
+az group create \
+  --name "$RG_NAME" \
+  --location "$LOCATION" \
+  --tags environment="$ENV" purpose="poc-gha-oidc"
+
+# Create the Azure Container Registry
+az acr create \
+  --resource-group "$RG_NAME" \
+  --name "$ACR_NAME" \
+  --location "$LOCATION" \
+  --sku Basic \
+  --admin-enabled false \
+  --tags environment="$ENV" purpose="poc-gha-oidc"
+
+# Create the Linux App Service plan
+az appservice plan create \
+  --resource-group "$RG_NAME" \
+  --name "$PLAN_NAME" \
+  --location "$LOCATION" \
+  --is-linux \
+  --sku B1 \
+  --tags environment="$ENV" purpose="poc-gha-oidc"
+
+# Create the user-assigned managed identity
+az identity create \
+  --resource-group "$RG_NAME" \
+  --name "$IDENTITY_NAME" \
+  --location "$LOCATION" \
+  --tags environment="$ENV" purpose="poc-gha-oidc"
+
+# Capture resource and identity IDs
+export IDENTITY_ID=$(az identity show \
+  --resource-group "$RG_NAME" \
+  --name "$IDENTITY_NAME" \
+  --query id \
+  --output tsv)
+
+export CLIENT_ID=$(az identity show \
+  --resource-group "$RG_NAME" \
+  --name "$IDENTITY_NAME" \
+  --query clientId \
+  --output tsv)
+
+export PRINCIPAL_ID=$(az identity show \
+  --resource-group "$RG_NAME" \
+  --name "$IDENTITY_NAME" \
+  --query principalId \
+  --output tsv)
+
+export ACR_ID=$(az acr show \
+  --resource-group "$RG_NAME" \
+  --name "$ACR_NAME" \
+  --query id \
+  --output tsv)
+
+# Create the Linux Web App with the placeholder container image
+az webapp create \
+  --resource-group "$RG_NAME" \
+  --plan "$PLAN_NAME" \
+  --name "$APP_NAME" \
+  --container-image-name "mcr.microsoft.com/appsvc/staticsite:latest" \
+  --container-registry-url "https://mcr.microsoft.com" \
+  --tags environment="$ENV" purpose="poc-gha-oidc"
+
+# Attach the managed identity to the web app
+az webapp identity assign \
+  --resource-group "$RG_NAME" \
+  --name "$APP_NAME" \
+  --identities "$IDENTITY_ID"
+
+# Configure App Service container settings
+az webapp config appsettings set \
+  --resource-group "$RG_NAME" \
+  --name "$APP_NAME" \
+  --settings WEBSITES_ENABLE_APP_SERVICE_STORAGE=false
+
+az webapp config container set \
+  --resource-group "$RG_NAME" \
+  --name "$APP_NAME" \
+  --docker-custom-image-name "mcr.microsoft.com/appsvc/staticsite:latest" \
+  --docker-registry-server-url "https://mcr.microsoft.com"
+
+az webapp config set \
+  --resource-group "$RG_NAME" \
+  --name "$APP_NAME" \
+  --generic-configurations "{\"acrUseManagedIdentityCreds\":true,\"acrUserManagedIdentityID\":\"$CLIENT_ID\"}"
+
+# Create the GitHub Actions OIDC federated credential
+az identity federated-credential create \
+  --resource-group "$RG_NAME" \
+  --identity-name "$IDENTITY_NAME" \
+  --name "fic-${PREFIX}-${ENV}" \
+  --issuer "https://token.actions.githubusercontent.com" \
+  --subject "repo:${GITHUB_OWNER}/${GITHUB_REPOSITORY}:environment:${ENV}" \
+  --audiences "api://AzureADTokenExchange"
+
+# If GitHub presents the repository's numeric owner/repository subject,
+# create this additional credential using the exact subject from the login error.
+az identity federated-credential create \
+  --resource-group "$RG_NAME" \
+  --identity-name "$IDENTITY_NAME" \
+  --name "fic-${PREFIX}-${ENV}-numeric-subject" \
+  --issuer "https://token.actions.githubusercontent.com" \
+  --subject "repo:iamsushantk@132103049/poc-gha-oidc@1375428847:environment:${ENV}" \
+  --audiences "api://AzureADTokenExchange"
+
+# Assign ACR push and pull permissions
+az role assignment create \
+  --assignee-object-id "$PRINCIPAL_ID" \
+  --assignee-principal-type ServicePrincipal \
+  --role AcrPush \
+  --scope "$ACR_ID"
+
+az role assignment create \
+  --assignee-object-id "$PRINCIPAL_ID" \
+  --assignee-principal-type ServicePrincipal \
+  --role AcrPull \
+  --scope "$ACR_ID"
+
+# Assign App Service management permissions
+export RG_ID=$(az group show \
+  --name "$RG_NAME" \
+  --query id \
+  --output tsv)
+
+az role assignment create \
+  --assignee-object-id "$PRINCIPAL_ID" \
+  --assignee-principal-type ServicePrincipal \
+  --role "Website Contributor" \
+  --scope "$RG_ID"
+
+# Display values needed by GitHub Actions
+echo "AZURE_CLIENT_ID:"
+az identity show \
+  --resource-group "$RG_NAME" \
+  --name "$IDENTITY_NAME" \
+  --query clientId \
+  --output tsv
+
+echo "AZURE_TENANT_ID:"
+az account show --query tenantId --output tsv
+
+echo "AZURE_SUBSCRIPTION_ID:"
+az account show --query id --output tsv
+
+echo "ACR_LOGIN_SERVER:"
+az acr show \
+  --resource-group "$RG_NAME" \
+  --name "$ACR_NAME" \
+  --query loginServer \
+  --output tsv
+
+echo "APP_SERVICE_HOSTNAME:"
+az webapp show \
+  --resource-group "$RG_NAME" \
+  --name "$APP_NAME" \
+  --query defaultHostName \
+  --output tsv
+
+# GitHub repository, Environment, Actions variables, and secrets
+# These commands require the GitHub CLI (`gh`) and an authenticated session.
+# The repository is private and the create command is safe to rerun.
+gh auth login
+
+gh repo view "$GH_REPOSITORY" >/dev/null 2>&1 || \
+  gh repo create "$GH_REPOSITORY" \
+    --private \
+    --description "Terraform POC for GitHub Actions to Azure OIDC deployment"
+
+# Create the GitHub Actions Environment required by the OIDC subject.
+# The GitHub API call is idempotent.
+gh api \
+  --method PUT \
+  "repos/${GH_REPOSITORY}/environments/${GH_ENVIRONMENT}"
+#
+# Terraform creates the GitHub `dev` Environment and these secrets:
+# AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID.
+# The commands below create/update the same GitHub Environment secrets.
+
+az identity show \
+  --resource-group "$RG_NAME" \
+  --name "$IDENTITY_NAME" \
+  --query clientId \
+  --output tsv | gh secret set AZURE_CLIENT_ID \
+  --repo "$GH_REPOSITORY" \
+  --env "$GH_ENVIRONMENT"
+
+az account show \
+  --query tenantId \
+  --output tsv | gh secret set AZURE_TENANT_ID \
+  --repo "$GH_REPOSITORY" \
+  --env "$GH_ENVIRONMENT"
+
+az account show \
+  --query id \
+  --output tsv | gh secret set AZURE_SUBSCRIPTION_ID \
+  --repo "$GH_REPOSITORY" \
+  --env "$GH_ENVIRONMENT"
+
+# Optional GitHub Actions environment variables used by build/deploy workflows.
+# Change the variable names if the workflow uses different input names.
+gh variable set AZURE_RESOURCE_GROUP \
+  --repo "$GH_REPOSITORY" \
+  --env "$GH_ENVIRONMENT" \
+  --body "$RG_NAME"
+
+gh variable set ACR_LOGIN_SERVER \
+  --repo "$GH_REPOSITORY" \
+  --env "$GH_ENVIRONMENT" \
+  --body "$(az acr show \
+    --resource-group "$RG_NAME" \
+    --name "$ACR_NAME" \
+    --query loginServer \
+    --output tsv)"
+
+gh variable set AZURE_WEBAPP_NAME \
+  --repo "$GH_REPOSITORY" \
+  --env "$GH_ENVIRONMENT" \
+  --body "$APP_NAME"
+
+# Variable names used by the checked-in workflow:
+gh variable set RESOURCE_GROUP \
+  --repo "$GH_REPOSITORY" \
+  --env "$GH_ENVIRONMENT" \
+  --body "$RG_NAME"
+
+gh variable set APP_SERVICE_NAME \
+  --repo "$GH_REPOSITORY" \
+  --env "$GH_ENVIRONMENT" \
+  --body "$APP_NAME"
+
+# Verify the configured GitHub Environment values:
+gh secret list --repo "$GH_REPOSITORY" --env "$GH_ENVIRONMENT"
+gh variable list --repo "$GH_REPOSITORY" --env "$GH_ENVIRONMENT"
+
+
+AZURE_CLIENT_ID:
+b8d16020-d420-443b-9543-133c9c6fffec
+AZURE_TENANT_ID:
+33bc19d4-7560-42ad-8f5b-4023365dd4a7
+AZURE_SUBSCRIPTION_ID:
+8270c146-bb12-4745-a693-c90a845f8c81
+ACR_LOGIN_SERVER:
+acrpocsubscriptiondev1234.azurecr.io
+APP_SERVICE_HOSTNAME:
+app-poc-subscription-dev.azurewebsites.net

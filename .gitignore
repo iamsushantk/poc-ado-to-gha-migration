@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+coverage/
+
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform/
+terraform.tfvars
+!terraform.tfvars.example
+projects/provisioning-scripts/scripts/.provisioning-context
+
+.env
+.env.*
+!.env.example
+*.log
