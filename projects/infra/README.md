@@ -32,6 +32,9 @@ Registry, managed identity, App Service plan, web app, role assignments, federat
 already exists before creating it, so rerunning it against an already-provisioned environment
 skips existing resources instead of recreating them. The Container Registry name is randomized
 only on first creation; subsequent runs reuse whichever registry is already in the resource group.
+It also configures the web app's container settings and managed-identity credentials so the App
+Service can authenticate to and pull images from that registry (`configure_acr_pull`) — without
+this, having the `AcrPull` role alone is not enough for the App Service runtime to pull the image.
 The script writes a local, ignored `.provisioning-context` file containing the resource names and
 OIDC values required by the GitHub step. Set `PROVISIONING_CONTEXT_FILE` to store that handoff
 elsewhere. Azure and GitHub teardown are also independent:

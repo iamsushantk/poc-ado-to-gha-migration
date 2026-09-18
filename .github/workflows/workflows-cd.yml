@@ -54,4 +54,8 @@ jobs:
       - name: Update App Service
         env:
           IMAGE: ${{ vars.ACR_LOGIN_SERVER }}/${{ github.event.client_payload.image_name }}:${{ github.event.client_payload.ref }}
-        run: az webapp config container set --name "${{ vars.APP_SERVICE_NAME }}" --resource-group "${{ vars.RESOURCE_GROUP }}" --docker-custom-image-name "$IMAGE"
+        run: |
+          az webapp config container set --name "${{ vars.APP_SERVICE_NAME }}" --resource-group "${{ vars.RESOURCE_GROUP }}" \
+            --docker-custom-image-name "$IMAGE" \
+            --docker-registry-server-url "https://${{ vars.ACR_LOGIN_SERVER }}"
+          az webapp restart --name "${{ vars.APP_SERVICE_NAME }}" --resource-group "${{ vars.RESOURCE_GROUP }}"

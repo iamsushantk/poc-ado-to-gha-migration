@@ -27,6 +27,7 @@ rg_id="$(az group show --name "$RESOURCE_GROUP" --query id -o tsv)"
 ensure_role_assignment "$PRINCIPAL_ID" AcrPush "$acr_id"
 ensure_role_assignment "$PRINCIPAL_ID" AcrPull "$acr_id"
 ensure_role_assignment "$PRINCIPAL_ID" "Website Contributor" "$rg_id"
+configure_acr_pull "$APPLICATION_ID"
 
 for subject in \
   "repo:${GITHUB_OWNER}/${WORKFLOW_REPOSITORY}:environment:${ENVIRONMENT}" \

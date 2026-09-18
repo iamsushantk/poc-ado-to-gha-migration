@@ -33,8 +33,12 @@ jobs:
         working-directory: .
         run: npm ci
 
+      # Fast, cheap checks first so formatting/lint mistakes fail before the slower Docker build.
       - name: Lint Next.js application
         run: npm run lint
 
-      - name: Build Next.js application
-        run: npm run build
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Build Docker image
+        run: docker build --tag subscription-portal:ci .

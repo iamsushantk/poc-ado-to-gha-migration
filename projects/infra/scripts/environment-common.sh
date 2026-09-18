@@ -134,6 +134,20 @@ ensure_web_app_identity() {
   fi
 }
 
+# Without this, the web app has no way to authenticate to ACR and pulls fail even though the
+# identity has AcrPull/AcrPush roles — those roles only apply once the app is actually configured
+# to authenticate with that identity when pulling.
+configure_acr_pull() {
+  local application_id="$1"
+  az webapp config container set --name "$APP_NAME" --resource-group "$RESOURCE_GROUP" \
+    --docker-registry-server-url "https://$ACR_LOGIN_SERVER" >/dev/null
+  az resource update --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" \
+    --resource-type "Microsoft.Web/sites" \
+    --set properties.siteConfig.acrUseManagedIdentityCreds=true \
+    --set properties.siteConfig.acrUserManagedIdentityID="$application_id" >/dev/null
+  echo "Configured '$APP_NAME' to pull from '$ACR_LOGIN_SERVER' using its managed identity."
+}
+
 ensure_role_assignment() {
   local principal_id="$1" role="$2" scope="$3"
   if az role assignment list --assignee-object-id "$principal_id" --role "$role" --scope "$scope" \
