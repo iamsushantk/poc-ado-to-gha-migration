@@ -1,7 +1,7 @@
 # Subscription portal
 
 This App Router application builds as a standalone container and requests deployment through the
-centralized `platform-workflows` project. The request includes the exact commit, target environment,
+centralized `workflows` project. The request includes the exact commit, target environment,
 image name, and source workflow run so the platform can report the deployment back to the caller.
 
 ## Prerequisites

@@ -108,7 +108,7 @@ jobs:
               if (platformRun) {
                 core.info(`Platform run ${platformRun.html_url} is ${platformRun.status}`);
               } else {
-                core.info('Waiting for the platform workflow run to appear...');
+                core.info('Waiting for the workflows deployment run to appear...');
               }
 
               await new Promise((resolve) => setTimeout(resolve, 10_000));

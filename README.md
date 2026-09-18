@@ -9,7 +9,7 @@ GitHub integration.
 - `projects/infra` - Azure CLI/GitHub CLI environment lifecycle scripts.
 - `projects/subscription-portal` - Next.js App Router application and its workflow that dispatches an exact
   commit/environment deployment request.
-- `projects/platform-workflows` - centralized deployment, provisioning, and teardown workflows.
+- `projects/workflows` - centralized deployment and platform workflows.
 
 ## Prerequisites
 
