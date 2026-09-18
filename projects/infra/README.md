@@ -25,9 +25,10 @@ workflows pass `${{ github.repository_owner }}` and `${{ github.event.repository
 `GH_TOKEN`, so each repository manages only its own environments.
 
 The root `infra-setup.yml` and `infra-teardown.yml` workflows expose these operations
-manually for `dev`, `sit`, `uat`, and `prod`. Setup skips an environment that already exists;
-teardown skips an environment that does not exist. Configure the provisioning Azure OIDC secrets
-and, when required by repository permissions, `GH_PAT`.
+manually for `dev`, `sit`, `uat`, and `prod`. Setup always runs provisioning for the requested
+environment (rerunning it against an already-provisioned environment relies on the underlying `az`/
+`gh` commands being idempotent); teardown skips an environment that does not exist. Configure the
+provisioning Azure OIDC secrets and, when required by repository permissions, `GH_PAT`.
 
 No Terraform configuration or state is required. The scripts query the current Azure CLI session,
 create the Azure resources and OIDC identity, and configure the platform GitHub Environment directly.
