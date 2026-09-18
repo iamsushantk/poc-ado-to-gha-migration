@@ -11,8 +11,8 @@ ACR_SKU="${ACR_SKU:-Basic}"
 APP_SERVICE_SKU="${APP_SERVICE_SKU:-B1}"
 GITHUB_OWNER="${GITHUB_OWNER:-}"
 WORKFLOW_REPOSITORY="${WORKFLOW_REPOSITORY:-}"
-GITHUB_OWNER_ID="${GITHUB_OWNER_ID:-132103049}"
-WORKFLOW_REPOSITORY_ID="${WORKFLOW_REPOSITORY_ID:-1375463783}"
+GITHUB_OWNER_ID="${GITHUB_OWNER_ID:-}"
+WORKFLOW_REPOSITORY_ID="${WORKFLOW_REPOSITORY_ID:-}"
 PLACEHOLDER_IMAGE="${PLACEHOLDER_IMAGE:-mcr.microsoft.com/appsvc/staticsite:latest}"
 # The subscription-portal image is not yet built when the App Service is created, so it starts
 # with a public placeholder image; the first CD run replaces it with the real container image.
@@ -34,6 +34,17 @@ load_github_context() {
   fi
   [[ -n "$GITHUB_OWNER" && -n "$WORKFLOW_REPOSITORY" ]] ||
     { echo "error: GitHub owner and repository could not be determined" >&2; exit 1; }
+  # The numeric owner/repo IDs are only needed for the ID-based OIDC subject variant and are
+  # repo-specific, so they are always resolved from the GitHub API rather than hardcoded, unless
+  # explicitly overridden via environment variables.
+  if [[ -z "$GITHUB_OWNER_ID" ]]; then
+    GITHUB_OWNER_ID="$(gh api "users/${GITHUB_OWNER}" --jq '.id' 2>/dev/null || gh api "orgs/${GITHUB_OWNER}" --jq '.id')"
+  fi
+  if [[ -z "$WORKFLOW_REPOSITORY_ID" ]]; then
+    WORKFLOW_REPOSITORY_ID="$(gh api "repos/${GITHUB_OWNER}/${WORKFLOW_REPOSITORY}" --jq '.id')"
+  fi
+  [[ -n "$GITHUB_OWNER_ID" && -n "$WORKFLOW_REPOSITORY_ID" ]] ||
+    { echo "error: GitHub owner/repository numeric IDs could not be determined" >&2; exit 1; }
 }
 
 require_environment() {
@@ -128,11 +139,24 @@ ensure_role_assignment() {
   if az role assignment list --assignee-object-id "$principal_id" --role "$role" --scope "$scope" \
       --query '[0].id' -o tsv 2>/dev/null | grep -q .; then
     echo "Role '$role' already assigned at scope '$scope'; skipping."
-  else
-    az role assignment create --assignee-object-id "$principal_id" --assignee-principal-type ServicePrincipal \
-      --role "$role" --scope "$scope" >/dev/null
-    echo "Assigned role '$role' at scope '$scope'."
+    return
   fi
+
+  # A freshly created identity's principal can take a few seconds to replicate through Azure AD;
+  # role assignment creation can fail transiently (e.g. PrincipalNotFound/MissingSubscription)
+  # until it does, so retry briefly instead of failing the whole script.
+  local attempt
+  for attempt in 1 2 3 4 5; do
+    if az role assignment create --assignee-object-id "$principal_id" --assignee-principal-type ServicePrincipal \
+        --role "$role" --scope "$scope" >/dev/null 2>&1; then
+      echo "Assigned role '$role' at scope '$scope'."
+      return
+    fi
+    echo "Role assignment for '$role' at scope '$scope' not ready yet (attempt $attempt/5); retrying in 10s..."
+    sleep 10
+  done
+  echo "error: failed to assign role '$role' at scope '$scope' after retries" >&2
+  exit 1
 }
 
 ensure_federated_credential() {
