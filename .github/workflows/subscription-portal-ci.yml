@@ -1,8 +1,6 @@
 name: Subscription portal - CI
 
 on:
-  pull_request:
-    paths: ['projects/subscription-portal/**', 'package.json', 'package-lock.json']
   push:
     branches: [main]
     paths: ['projects/subscription-portal/**', 'package.json', 'package-lock.json']
@@ -10,7 +8,7 @@ on:
     inputs:
       environment:
         description: Azure/GitHub environment to build and deploy to
-        required: true
+        required: false
         type: choice
         options: [dev, sit, uat, prod]
         default: dev
@@ -20,8 +18,7 @@ permissions:
 
 concurrency:
   group: subscription-portal-ci-${{ github.ref }}
-  # Only cancel superseded PR runs; never cancel an in-progress build-and-push/deploy on main.
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 defaults:
   run:
@@ -57,7 +54,6 @@ jobs:
 
   build-and-push:
     needs: validate
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'dev' }}
     permissions:
@@ -91,7 +87,6 @@ jobs:
 
   trigger-deployment:
     needs: build-and-push
-    if: github.event_name != 'pull_request'
     uses: ./.github/workflows/subscription-portal-cd.yml
     with:
       environment: ${{ needs.build-and-push.outputs.environment }}
