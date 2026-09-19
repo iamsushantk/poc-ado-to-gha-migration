@@ -8,22 +8,23 @@ export default function Home() {
         <span className="nav-logo">subscription-portal</span>
         <ul className="nav-links">
           <li>
-            <a href="#features">Features</a>
+            <a href="#features">How it works</a>
           </li>
           <li>
-            <a href="#">Pricing</a>
+            <a href="#">Vehicles</a>
           </li>
           <li>
-            <a href="#">About</a>
+            <a href="#">FAQs</a>
           </li>
         </ul>
       </nav>
 
       <header className="hero">
-        <h1>Manage your subscriptions, simplified.</h1>
+        <h1>Your new car, one monthly payment.</h1>
         <p>
-          One dashboard for every subscription your team relies on — deployed
-          via GitHub Actions OIDC straight to Azure App Service.
+          A novated car subscription bundles finance, insurance, servicing,
+          tyres, and registration into a single predictable payment — taken
+          straight from your pre-tax salary.
         </p>
         <a className="cta-button" href="#features">
           Get Started
@@ -32,17 +33,18 @@ export default function Home() {
 
       <section id="features" className="features">
         <div className="feature-card">
-          <h3>Automated deployments</h3>
+          <h3>All-inclusive pricing</h3>
           <p>
-            Every commit is built, pushed to ACR, and deployed through a
-            centralized workflow with no manual steps.
+            Subscription cost, servicing, tyres, maintenance, comprehensive
+            insurance, and re-registration are all budgeted into your weekly
+            price.
           </p>
         </div>
         <div className="feature-card">
-          <h3>Secure by default</h3>
+          <h3>Salary packaging benefits</h3>
           <p>
-            Azure OIDC federated credentials replace long-lived secrets across
-            every environment.
+            Pay using pre-tax and post-tax salary via the Employee Contribution
+            Method, with GST credits applied where eligible.
           </p>
         </div>
         <div className="feature-card">

@@ -5,9 +5,9 @@ import './globals.css';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'subscription-portal',
+  title: 'Subscription Portal — Salary-Packaged Car Subscriptions',
   description:
-    'Next.js scaffold deployed via GitHub Actions OIDC to Azure App Service',
+    'A demo portal for browsing novated car subscription plans, where finance, insurance, and servicing are bundled into one predictable payment.',
 };
 
 export default function RootLayout({ children }) {
