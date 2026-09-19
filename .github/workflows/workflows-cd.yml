@@ -44,6 +44,7 @@ jobs:
         run: az acr login --name "${ACR_LOGIN_SERVER%%.*}"
 
       - name: Build and push image
+        working-directory: projects/subscription-portal
         env:
           IMAGE: ${{ vars.ACR_LOGIN_SERVER }}/${{ github.event.client_payload.image_name }}:${{ github.event.client_payload.ref }}
         run: |
