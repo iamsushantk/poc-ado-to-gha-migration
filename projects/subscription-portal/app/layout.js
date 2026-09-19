@@ -1,3 +1,5 @@
+import './globals.css';
+
 // Applies to every route in the app (root layout config propagates to all pages), so nothing is
 // statically prerendered — all pages are server-rendered per-request instead.
 export const dynamic = 'force-dynamic';
