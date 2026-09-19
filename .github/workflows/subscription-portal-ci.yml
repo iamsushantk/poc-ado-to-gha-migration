@@ -3,7 +3,6 @@ name: Subscription portal - CI
 on:
   push:
     branches: [main]
-    paths: ['projects/subscription-portal/**', 'package.json', 'package-lock.json']
   workflow_dispatch:
 
 permissions:
