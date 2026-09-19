@@ -31,10 +31,11 @@ Next.js-specific workflow manually. The shell validation requires Bash (Git Bash
 
 ## Deployment model
 
-The app workflow dispatches a deployment request to the centralized platform workflow. The platform
-workflow checks out the requested application commit, builds and pushes its image to Azure Container
-Registry, and updates the target App Service using Azure OIDC. Azure trusts the platform workflow,
-not each application repository.
+On push to `main` (or manual dispatch with a chosen environment), the app's CI workflow builds and
+pushes a commit-SHA-tagged image to that environment's Azure Container Registry using Azure OIDC,
+then dispatches a deployment request to the centralized workflows project. The centralized workflow
+only updates the target App Service to pull the already-pushed image tag; it does not build images
+itself.
 
 Provision environments in two explicit steps:
 `projects/infra/scripts/provision-azure.sh <environment>` followed by

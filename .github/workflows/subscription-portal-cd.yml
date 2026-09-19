@@ -1,9 +1,6 @@
 name: Subscription portal - CD
 
 on:
-  push:
-    branches: [main]
-    paths: ['projects/subscription-portal/**']
   workflow_dispatch:
     inputs:
       environment:
@@ -12,15 +9,38 @@ on:
         type: choice
         options: [dev, sit, uat, prod]
         default: dev
+      ref:
+        description: Commit SHA of an already-pushed image tag to deploy (defaults to the current commit)
+        required: false
+        type: string
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      ref:
+        required: true
+        type: string
+      image_name:
+        required: false
+        type: string
+        default: subscription-portal
 
 permissions:
   contents: read
 
 jobs:
   request-deployment:
-    environment: ${{ github.event.inputs.environment || 'dev' }}
+    environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     steps:
+      - name: Resolve deployment ref
+        id: resolve
+        run: |
+          set -euo pipefail
+          ref="${{ inputs.ref }}"
+          echo "ref=${ref:-${{ github.sha }}}" >> "$GITHUB_OUTPUT"
+
       - name: Validate platform GitHub App configuration
         env:
           WORKFLOW_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
@@ -34,13 +54,18 @@ jobs:
       - name: Dispatch platform deployment
         id: dispatch
         uses: actions/github-script@v7
+        env:
+          DEPLOY_REF: ${{ steps.resolve.outputs.ref }}
+          DEPLOY_ENVIRONMENT: ${{ inputs.environment }}
+          DEPLOY_IMAGE_NAME: ${{ inputs.image_name || 'subscription-portal' }}
         with:
           github-token: ${{ secrets.WORKFLOW_TOKEN }}
           script: |
+            const ref = process.env.DEPLOY_REF;
             const commit = await github.rest.repos.getCommit({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: context.sha
+              ref
             });
             const commitMessage = commit.data.commit.message
               .split('\n', 1)[0]
@@ -54,10 +79,10 @@ jobs:
               client_payload: {
                 application_repository: context.repo.owner + '/' + context.repo.repo,
                 application_repository_name: context.repo.repo,
-                ref: context.sha,
+                ref,
                 commit_message: commitMessage,
-                environment: '${{ github.event.inputs.environment || 'dev' }}',
-                image_name: 'subscription-portal',
+                environment: process.env.DEPLOY_ENVIRONMENT,
+                image_name: process.env.DEPLOY_IMAGE_NAME,
                 source_run_id: String(context.runId)
               }
             });
@@ -68,8 +93,8 @@ jobs:
         env:
           WORKFLOW_REPOSITORY: ${{ github.repository }}
           APPLICATION_REPOSITORY: ${{ github.repository }}
-          APPLICATION_REF: ${{ github.sha }}
-          ENVIRONMENT_NAME: ${{ github.event.inputs.environment || 'dev' }}
+          APPLICATION_REF: ${{ steps.resolve.outputs.ref }}
+          ENVIRONMENT_NAME: ${{ inputs.environment }}
         with:
           github-token: ${{ secrets.WORKFLOW_TOKEN }}
           script: |
@@ -127,8 +152,9 @@ jobs:
             echo "## Platform deployment"
             echo ""
             echo "- **Application:** \`${{ github.repository }}\`"
-            echo "- **Environment:** \`${{ github.event.inputs.environment || 'dev' }}\`"
-            echo "- **Commit:** \`${{ github.sha }}\`"
+            echo "- **Environment:** \`${{ inputs.environment }}\`"
+            echo "- **Commit:** \`${{ steps.resolve.outputs.ref }}\`"
             echo "- **Platform run:** ${PLATFORM_RUN_URL:-not found}"
             echo "- **Platform result:** \`${PLATFORM_CONCLUSION:-unknown}\`"
           } >> "$GITHUB_STEP_SUMMARY"
+
