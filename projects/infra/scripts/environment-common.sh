@@ -137,14 +137,23 @@ ensure_web_app_identity() {
 # Without this, the web app has no way to authenticate to ACR and pulls fail even though the
 # identity has AcrPull/AcrPush roles — those roles only apply once the app is actually configured
 # to authenticate with that identity when pulling.
+#
+# `az resource update --set properties.siteConfig...` and `az webapp config set
+# --generic-configurations` were both observed to silently fail to persist
+# acrUseManagedIdentityCreds/acrUserManagedIdentityID (the write appears to succeed but a
+# subsequent read shows the old values). A direct ARM PATCH against the /config/web endpoint is
+# the only approach found to reliably persist these two site-config properties.
 configure_acr_pull() {
   local application_id="$1"
+  local app_id body
   az webapp config container set --name "$APP_NAME" --resource-group "$RESOURCE_GROUP" \
     --container-registry-url "https://$ACR_LOGIN_SERVER" >/dev/null
-  az resource update --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" \
-    --resource-type "Microsoft.Web/sites" \
-    --set properties.siteConfig.acrUseManagedIdentityCreds=true \
-    --set properties.siteConfig.acrUserManagedIdentityID="$application_id" >/dev/null
+  app_id="$(az webapp show --name "$APP_NAME" --resource-group "$RESOURCE_GROUP" --query id -o tsv)"
+  body="$(printf '{"properties":{"acrUseManagedIdentityCreds":true,"acrUserManagedIdentityID":"%s"}}' "$application_id")"
+  az rest --method patch \
+    --uri "https://management.azure.com${app_id}/config/web?api-version=2022-03-01" \
+    --headers "Content-Type=application/json" \
+    --body "$body" >/dev/null
   echo "Configured '$APP_NAME' to pull from '$ACR_LOGIN_SERVER' using its managed identity."
 }
 
