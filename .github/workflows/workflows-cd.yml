@@ -30,7 +30,7 @@ jobs:
         with:
           repository: ${{ github.event.client_payload.application_repository }}
           ref: ${{ github.event.client_payload.ref }}
-          token: ${{ secrets.PLATFORM_WORKFLOW_TOKEN }}
+          token: ${{ secrets.WORKFLOW_TOKEN }}
 
       - uses: azure/login@v2
         with:

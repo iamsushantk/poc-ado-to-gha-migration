@@ -7,11 +7,11 @@ image name, and source workflow run so the platform can report the deployment ba
 ## Prerequisites
 
 Provision the Azure resources, GitHub Environments, and platform OIDC federated credentials before
-dispatching a deployment. Configure `PLATFORM_WORKFLOW_TOKEN` for the application repository and
+dispatching a deployment. Configure `WORKFLOW_TOKEN` for the application repository and
 the platform workflow repository:
 
 ```bash
-gh secret set PLATFORM_WORKFLOW_TOKEN --repo OWNER/poc-ado-to-gha-migration
+gh secret set WORKFLOW_TOKEN --repo OWNER/poc-ado-to-gha-migration
 ```
 
 ## Local development

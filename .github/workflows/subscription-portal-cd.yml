@@ -23,11 +23,11 @@ jobs:
     steps:
       - name: Validate platform GitHub App configuration
         env:
-          PLATFORM_WORKFLOW_TOKEN: ${{ secrets.PLATFORM_WORKFLOW_TOKEN }}
+          WORKFLOW_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
         run: |
           set -euo pipefail
-          test -n "$PLATFORM_WORKFLOW_TOKEN" || {
-            echo "::error::Missing PLATFORM_WORKFLOW_TOKEN repository secret."
+          test -n "$WORKFLOW_TOKEN" || {
+            echo "::error::Missing WORKFLOW_TOKEN repository secret."
             exit 1
           }
 
@@ -35,7 +35,7 @@ jobs:
         id: dispatch
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.PLATFORM_WORKFLOW_TOKEN }}
+          github-token: ${{ secrets.WORKFLOW_TOKEN }}
           script: |
             const commit = await github.rest.repos.getCommit({
               owner: context.repo.owner,
@@ -71,7 +71,7 @@ jobs:
           APPLICATION_REF: ${{ github.sha }}
           ENVIRONMENT_NAME: ${{ github.event.inputs.environment || 'dev' }}
         with:
-          github-token: ${{ secrets.PLATFORM_WORKFLOW_TOKEN }}
+          github-token: ${{ secrets.WORKFLOW_TOKEN }}
           script: |
             const [owner, repo] = process.env.WORKFLOW_REPOSITORY.split('/');
             const refMarker = process.env.APPLICATION_REF.slice(0, 12);
