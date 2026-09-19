@@ -6,6 +6,7 @@
     "projects/subscription-portal"
   ],
   "scripts": {
+    "dev": "npm run dev --workspace projects/subscription-portal",
     "build": "npm run build --workspace projects/subscription-portal",
     "lint": "npm run lint --workspace projects/subscription-portal",
     "validate:shell": "bash -n projects/infra/scripts/*.sh",
