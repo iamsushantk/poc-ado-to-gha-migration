@@ -18,6 +18,11 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: subscription-portal-ci-${{ github.ref }}
+  # Only cancel superseded PR runs; never cancel an in-progress build-and-push/deploy on main.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 defaults:
   run:
     working-directory: projects/subscription-portal
