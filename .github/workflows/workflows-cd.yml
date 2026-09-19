@@ -36,8 +36,11 @@ jobs:
         env:
           IMAGE: ${{ vars.ACR_LOGIN_SERVER }}/${{ github.event.client_payload.image_name }}:${{ github.event.client_payload.ref }}
         run: |
+          # Registry URL and managed-identity pull credentials are configured once during
+          # provisioning (configure_acr_pull); only the image tag changes on each deploy, so we
+          # avoid re-passing --container-registry-url here, which would otherwise trigger the
+          # CLI's admin-credential auto-lookup (and its warnings/failures) on every deployment.
           az webapp config container set --name "${{ vars.APP_SERVICE_NAME }}" --resource-group "${{ vars.RESOURCE_GROUP }}" \
-            --docker-custom-image-name "$IMAGE" \
-            --docker-registry-server-url "https://${{ vars.ACR_LOGIN_SERVER }}"
+            --container-image-name "$IMAGE"
           az webapp restart --name "${{ vars.APP_SERVICE_NAME }}" --resource-group "${{ vars.RESOURCE_GROUP }}"
 

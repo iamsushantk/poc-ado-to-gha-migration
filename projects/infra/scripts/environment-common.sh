@@ -140,7 +140,7 @@ ensure_web_app_identity() {
 configure_acr_pull() {
   local application_id="$1"
   az webapp config container set --name "$APP_NAME" --resource-group "$RESOURCE_GROUP" \
-    --docker-registry-server-url "https://$ACR_LOGIN_SERVER" >/dev/null
+    --container-registry-url "https://$ACR_LOGIN_SERVER" >/dev/null
   az resource update --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" \
     --resource-type "Microsoft.Web/sites" \
     --set properties.siteConfig.acrUseManagedIdentityCreds=true \
