@@ -42,5 +42,15 @@ jobs:
           # CLI's admin-credential auto-lookup (and its warnings/failures) on every deployment.
           az webapp config container set --name "${{ vars.APP_SERVICE_NAME }}" --resource-group "${{ vars.RESOURCE_GROUP }}" \
             --container-image-name "$IMAGE"
-          az webapp restart --name "${{ vars.APP_SERVICE_NAME }}" --resource-group "${{ vars.RESOURCE_GROUP }}"
+
+      - name: Set application environment settings
+        run: |
+          az webapp config appsettings set --name "${{ vars.APP_SERVICE_NAME }}" --resource-group "${{ vars.RESOURCE_GROUP }}" \
+            --settings \
+              APP_ENVIRONMENT="${{ github.event.client_payload.environment }}" \
+              APP_BUILD_ID="${{ github.event.client_payload.ref }}" \
+            >/dev/null
+
+      - name: Restart App Service
+        run: az webapp restart --name "${{ vars.APP_SERVICE_NAME }}" --resource-group "${{ vars.RESOURCE_GROUP }}"
 

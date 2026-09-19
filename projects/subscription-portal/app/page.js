@@ -1,3 +1,7 @@
+// Render per-request so APP_ENVIRONMENT/APP_BUILD_ID (injected as App Service settings at deploy
+// time) are read at runtime instead of being baked in as "unknown" during the Docker build.
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   const environment = process.env.APP_ENVIRONMENT || 'unknown';
   const buildId = process.env.APP_BUILD_ID || 'unknown';
